@@ -5,7 +5,9 @@ export default {
         return {
             candidate: {},
             errors: [],
-            isClick: false
+            isClick: false,
+            image: '',
+            imagePreview: ''
         }
     },
     methods: {
@@ -14,8 +16,13 @@ export default {
         }),
         storeCandidate() {
             this.isClick = true
+
+            const data = {
+                candidate: this.candidate,
+                image: this.image
+            }
             
-            this.store(this.candidate).then((res) => {
+            this.store(data).then((res) => {
                 const message = res.data.message
                 
                 this.$swal({
@@ -48,6 +55,22 @@ export default {
             })
 
             this.isClick = false
+        },
+        onFileSelected(e) {
+            let files = e.target.files
+            if (!files.length) return;
+
+            if (files[0].size > 2048000)
+            {
+                this.errors.image = {
+                    0: 'Maximum allowed file size is 2 MB.'
+                }
+            }
+            else {
+                this.errors.image = ''
+                this.image = files[0]
+                this.imagePreview = URL.createObjectURL(files[0]) // create preview using objectURL
+            }
         }
     }
 }
@@ -125,6 +148,16 @@ export default {
                         <textarea class="form-control" v-model="candidate.mission" cols="30" rows="5" placeholder="Enter Mission"></textarea>
                         <div v-if="this.errors.mission">
                             <small class="form-text text-danger">{{ this.errors.mission[0] }}</small>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Image</label>
+                        <div v-if="imagePreview">
+                            <img :src="imagePreview" width="200" height="150">
+                        </div>
+                        <input type="file" class="form-control mt-2" @change="onFileSelected">
+                        <div v-if="this.errors.image">
+                            <small class="form-text text-danger">{{ this.errors.image[0] }}</small>
                         </div>
                     </div>
                     <button type="submit" class="btn btn-primary" :disabled="isClick ? true : false">

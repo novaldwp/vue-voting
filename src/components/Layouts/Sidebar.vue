@@ -44,6 +44,12 @@ export default {
                     Candidates
                 </router-link>
             </li>
+            <li class="nav-item">
+                <router-link :to="{ name: 'elections.index' }" class="nav-link">
+                    <i class="fas fa-fw fa-tachometer-alt"></i>
+                    Elections
+                </router-link>
+            </li>
             
             <!-- Divider -->
             <hr class="sidebar-divider d-none d-md-block">

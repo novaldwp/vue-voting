@@ -1,31 +1,41 @@
 <script>
-import { mapActions } from 'vuex'
+import { mapActions, mapGetters } from 'vuex'
 export default {
     data() {
         return {
-            candidate: [],
+            selectedCandidate: 0,
+            messageSelectCandidate: '',
+            candidate_id: [],
+            election: {},
             errors: [],
             isClick: false,
             image: '',
             imagePreview: ''
         }
     },
+    computed: {
+        ...mapGetters({
+            getCandidates: 'candidate/getAllCandidates',
+        }),        
+    },
     methods: {
         ...mapActions({
-            update: 'candidate/update',
-            getCandidateById: 'candidate/getById'
+            getAllCandidates: 'candidate/getAllCandidates',
+            updateElection: 'election/update',
+            getElectionById: 'election/getById'
         }),
-        updateCandidate() {
+        update() {
             this.isClick = true
             
-            const candidate_id = this.$route.params.id
+            const candidates = this.candidate_id
             const data = {
-                candidate_id: candidate_id,
-                candidate: this.candidate,
+                election_id: this.$route.params.id,
+                candidate_id: candidates,
+                election: this.election,
                 image: this.image
             }
 
-            this.update(data).then((res) => {
+            this.updateElection(data).then((res) => {
                 const message = res.data.message
                 
                 this.$swal({
@@ -38,7 +48,7 @@ export default {
                 })
                 .then(() => {
                     this.$router.push({
-                        name: 'candidates.index'
+                        name: 'elections.index'
                     })
                 })
             })
@@ -49,9 +59,6 @@ export default {
                     title: 'Error',
                     text: message,
                     icon: 'error',
-                    showConfirmButton: false,
-                    timer: 1000,
-                    timerProgressBar: true
                 })
 
                 this.errors = err.response.data.errors
@@ -76,12 +83,15 @@ export default {
         }
     },
     created() {
-        const candidate_id = this.$route.params.id
+        this.getAllCandidates()
 
-        this.getCandidateById(candidate_id).then((res) => {
-            this.candidate = res.data.data
-            this.image = res.data.data.image
-            this.imagePreview = res.data.data.thumbnail
+        const election_id = this.$route.params.id
+
+        this.getElectionById(election_id).then((res) => {
+            this.election       = res.data.data
+            this.candidate_id   = res.data.data.candidates_id
+            this.image          = res.data.data.image
+            this.imagePreview   = res.data.data.thumbnail
         })
         .catch((err) => {
             const title   = err.response.status
@@ -111,7 +121,7 @@ export default {
 
         <!-- Page Heading -->
         <div class="d-sm-flex align-items-center justify-content-between mb-4">
-            <h1 class="h3 mb-0 text-gray-800">Edit Data Candidate</h1>
+            <h1 class="h3 mb-0 text-gray-800">Edit Data Election</h1>
         </div>
 
         <!-- Table -->
@@ -124,60 +134,40 @@ export default {
         </div>
             </div>
             <div class="card-body">
-                <form @submit.prevent="updateCandidate">
+                <form @submit.prevent="update">
+                    <div class="form-group">
+                        <label for="name">Name</label>
+                        <input type="text" class="form-control" v-model="election.name" placeholder="Enter Name Election">
+                        <div v-if="this.errors.name">
+                            <small class="form-text text-danger">{{ this.errors.name[0] }}</small>
+                        </div>
+                    </div>
                     <div class="form-row">
                         <div class="form-group col-md-6">
-                            <label for="first_name">First Name</label>
-                            <input type="text" class="form-control" v-model="candidate.first_name" placeholder="Enter First Name" autofocus>
-                            <div v-if="this.errors.first_name">
-                                <small class="form-text text-danger">{{ this.errors.first_name[0] }}</small>
+                            <label for="start_date">Start Date</label>
+                            <input type="date" class="form-control" v-model="election.start_date" placeholder="Enter Start Date" autofocus>
+                            <div v-if="this.errors.start_date">
+                                <small class="form-text text-danger">{{ this.errors.start_date[0] }}</small>
                             </div>
                         </div>
                         <div class="form-group col-md-6">
-                            <label for="last_name">Last Name</label>
-                            <input type="text" class="form-control" v-model="candidate.last_name" placeholder="Enter Last Name">
+                            <label for="end_date">End Date</label>
+                            <input type="date" class="form-control date-picker" v-model="election.end_date" placeholder="Enter End Date">
+                            <div v-if="this.errors.end_date">
+                                <small class="form-text text-danger">{{ this.errors.end_date[0] }}</small>
+                            </div>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="email">Email</label>
-                        <input type="email" class="form-control" v-model="candidate.email" placeholder="Enter Email Address (ex. test@test.com)">
+                        <label for="email">Select Candidates</label>
+                        <select class="form-control" v-model="candidate_id" @change="test" multiple required>
+                            <option v-for="(candidate, index) in getCandidates" :key="index" :value="candidate.id">
+                                {{ candidate.first_name }} {{ candidate.last_name }}
+                            </option>
+                        </select>
+                        <small class="form-text text-dark">Please select 2 or more candidate from the list above using Ctrl + Left Click.</small>
                         <div v-if="this.errors.email">
                             <small class="form-text text-danger">{{ this.errors.email[0] }}</small>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="phone">Phone Number</label>
-                        <input type="text" class="form-control" v-model="candidate.phone" placeholder="Enter Phone Number (ex. 08819xxxxx)" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1');">
-                        <div v-if="this.errors.phone">
-                            <small class="form-text text-danger">{{ this.errors.phone[0] }}</small>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="dob">Date of Birth</label>
-                        <input type="date" class="form-control" v-model="candidate.dob">
-                        <div v-if="this.errors.dob">
-                            <small class="form-text text-danger">{{ this.errors.dob[0] }}</small>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="address">Address</label>
-                        <textarea class="form-control" v-model="candidate.address" cols="30" rows="5" placeholder="Enter Address"></textarea>
-                        <div v-if="this.errors.address">
-                            <small class="form-text text-danger">{{ this.errors.address[0] }}</small>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="vision">Vision</label>
-                        <textarea class="form-control" v-model="candidate.vision" cols="30" rows="5" placeholder="Enter Vision"></textarea>
-                        <div v-if="this.errors.vision">
-                            <small class="form-text text-danger">{{ this.errors.vision[0] }}</small>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="mission">Mission</label>
-                        <textarea class="form-control" v-model="candidate.mission" cols="30" rows="5" placeholder="Enter Mission"></textarea>
-                        <div v-if="this.errors.mission">
-                            <small class="form-text text-danger">{{ this.errors.mission[0] }}</small>
                         </div>
                     </div>
                     <div class="form-group">
