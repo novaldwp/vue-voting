@@ -7,12 +7,18 @@ export default {
     },
     data() {
         return {
+            prevRoute: '',
             elections: [],
             candidate: {},
             errors: [],
             image: '',
             imagePreview: '',
             stateLoading: true
+        }
+    },
+    computed: {
+        prevRoutePath() {
+            return this.prevRoute ? this.prevRoute.path : '/candidates'
         }
     },
     methods: {
@@ -50,6 +56,11 @@ export default {
 
         })
     },
+    beforeRouteEnter (to, from, next) {
+        next(vm => {
+            vm.prevRoute = from
+        })
+    }
 }
 </script>
 <template>
@@ -59,13 +70,25 @@ export default {
         <!-- Page Heading -->
         <div class="d-sm-flex align-items-center justify-content-between mb-4">
             <h1 class="h3 mb-0 text-gray-800">Detail Candidate</h1>
+                
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <router-link :to="{ name: 'dashboard' }">Home</router-link>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <router-link :to="{ name: 'candidates.index' }">Candidates</router-link>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">Detail Candidate</li>
+                </ol>
+            </nav>
         </div>
 
         <!-- Card -->
         <div class="card shadow">
             <div class="card-header py-3">
                 <div class="d-sm-flex align-items-center justify-content-between">
-                    <router-link :to="{ name: 'candidates.index' }" class="d-none d-sm-inline-block">
+                    <router-link :to="prevRoutePath" class="d-none d-sm-inline-block">
                         Back
                     </router-link>
                 </div>
@@ -84,7 +107,7 @@ export default {
                             <div class="row">
                                 <div class="col-lg-4 col-md-5 xs-margin-30px-bottom">
                                     <div class="team-single-img">
-                                        <img :src="candidate.image" :alt="candidate.full_name">
+                                        <img :src="candidate.image" :alt="candidate.full_name" class="img-main">
                                     </div>
                                 </div>
 
@@ -161,8 +184,8 @@ export default {
                             </div>
                         </div>
                     </div>
+                    <div class="col-md-12" v-if='this.$store.state.auth.credential.role == "admin"'>
                     <hr>
-                    <div class="col-md-12">
                         <div class="row">
                             <h4>List Elections</h4>
                         </div>
@@ -179,7 +202,7 @@ export default {
                                     </thead>
                                     <tfoot>
                                         <tr>
-                                            <th>Name {{ elections.length == 0 ? "asd":"zxc" }}</th>
+                                            <th>Name</th>
                                             <th>Start Date</th>
                                             <th>End Date</th>
                                             <th class="text-center">Image</th>
@@ -194,8 +217,8 @@ export default {
                                                         {{ election.name }}
                                                     </router-link>
                                                 </td>
-                                                <td class="td align-middle">{{ election.start_datee }}</td>
-                                                <td class="td align-middle">{{ election.end_datee }}</td>
+                                                <td class="td align-middle">{{ election.start_date }}</td>
+                                                <td class="td align-middle">{{ election.end_date }}</td>
                                                 <td class="td align-middle text-center">
                                                     <img :src="election.thumbnail" :alt="election.name" width="80" height="60">
                                                 </td>
@@ -240,11 +263,9 @@ body{
 .section-heading h5 {
     font-size: 36px
 }
-
 .team-single-text .section-heading.half {
     margin-bottom: 20px
 }
-
 @media screen and (max-width: 1199px) {
     .team-single-text .section-heading h4,
     .section-heading h5 {
@@ -254,7 +275,6 @@ body{
         margin-bottom: 15px
     }
 }
-
 @media screen and (max-width: 991px) {
     .team-single-text .section-heading h4,
     .section-heading h5 {
@@ -264,19 +284,14 @@ body{
         margin-bottom: 10px
     }
 }
-
 @media screen and (max-width: 767px) {
     .team-single-text .section-heading h4,
     .section-heading h5 {
         font-size: 24px
     }
 }
-
 .padding-30px-all {
     padding: 30px;
-}
-.bg-light-gray {
-    background-color: #f7f7f7;
 }
 .text-center {
     text-align: center!important;
@@ -285,116 +300,22 @@ img {
     max-width: 100%;
     height: auto;
 }
-
-
+img.img-main {
+    width: 400px;
+    height: 400px;
+}
 .list-style9 {
     list-style: none;
     padding: 0
 }
-
 .list-style9 li {
     position: relative;
     margin: 0 0 15px 0;
     border-bottom: 1px dashed rgba(0, 0, 0, 0.1)
 }
-
 .list-style9 li:last-child {
     border-bottom: none;
     padding-bottom: 0;
     margin-bottom: 0
-}
-
-
-.text-sky {
-    color: #02c2c7
-}
-
-.text-orange {
-    color: #e95601
-}
-
-.text-green {
-    color: #5bbd2a
-}
-
-.text-yellow {
-    color: #f0d001
-}
-
-.text-pink {
-    color: #ff48a4
-}
-
-.text-purple {
-    color: #9d60ff
-}
-
-.text-lightred {
-    color: #ff5722
-}
-
-a.text-sky:hover {
-    opacity: 0.8;
-    color: #02c2c7
-}
-
-a.text-orange:hover {
-    opacity: 0.8;
-    color: #e95601
-}
-
-a.text-green:hover {
-    opacity: 0.8;
-    color: #5bbd2a
-}
-
-a.text-yellow:hover {
-    opacity: 0.8;
-    color: #f0d001
-}
-
-a.text-pink:hover {
-    opacity: 0.8;
-    color: #ff48a4
-}
-
-a.text-purple:hover {
-    opacity: 0.8;
-    color: #9d60ff
-}
-
-a.text-lightred:hover {
-    opacity: 0.8;
-    color: #ff5722
-}
-
-
-
-.bg-sky {
-    background-color: #02c2c7
-}
-
-.bg-orange {
-    background-color: #e95601
-}
-
-.bg-green {
-    background-color: #5bbd2a
-}
-
-.bg-yellow {
-    background-color: #f0d001
-}
-
-.bg-pink {
-    background-color: #ff48a4
-}
-
-.bg-purple {
-    background-color: #9d60ff
-}
-
-.bg-lightred {
-    background-color: #ff5722
 }
 </style>

@@ -1,6 +1,10 @@
 <script>
+import MoonLoader from 'vue-spinner/src/MoonLoader.vue'
 import { mapActions, mapGetters } from 'vuex'
 export default {
+    components: {
+        MoonLoader
+    },
     data() {
         return {
             selectedCandidate: 0,
@@ -10,12 +14,14 @@ export default {
             errors: [],
             isClick: false,
             image: '',
-            imagePreview: ''
+            imagePreview: '',
+            stateLoading: true
         }
     },
     computed: {
         ...mapGetters({
             getCandidates: 'candidate/getAllCandidates',
+            getDataLoading: 'election/getDataLoading' // TODO => TAMBAH INI KE SEMUA MODUL CREATE/UPDATE
         }),        
     },
     methods: {
@@ -25,8 +31,6 @@ export default {
             getElectionById: 'election/getById'
         }),
         update() {
-            this.isClick = true
-            
             const candidates = this.candidate_id
             const data = {
                 election_id: this.$route.params.id,
@@ -63,8 +67,6 @@ export default {
 
                 this.errors = err.response.data.errors
             })
-
-            this.isClick = false
         },
         onFileSelected(e) {
             let files = e.target.files
@@ -92,6 +94,7 @@ export default {
             this.candidate_id   = res.data.data.candidates_id
             this.image          = res.data.data.image
             this.imagePreview   = res.data.data.thumbnail
+            this.stateLoading   = false
         })
         .catch((err) => {
             const title   = err.response.status
@@ -107,7 +110,7 @@ export default {
             })
             .then(() => {
                 this.$router.push({
-                    name: 'candidates.index'
+                    name: 'elections.index'
                 })
             })
 
@@ -122,69 +125,92 @@ export default {
         <!-- Page Heading -->
         <div class="d-sm-flex align-items-center justify-content-between mb-4">
             <h1 class="h3 mb-0 text-gray-800">Edit Data Election</h1>
+                
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <router-link :to="{ name: 'dashboard' }">Home</router-link>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <router-link :to="{ name: 'elections.index' }">Elections</router-link>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">Edit Election</li>
+                </ol>
+            </nav>
         </div>
 
         <!-- Table -->
         <div class="card shadow">
             <div class="card-header py-3">
         <div class="d-sm-flex align-items-center justify-content-between">
-            <router-link :to="{ name: 'candidates.index' }" class="d-none d-sm-inline-block">
+            <router-link :to="{ name: 'elections.index' }" class="d-none d-sm-inline-block">
                 Back
             </router-link>
         </div>
             </div>
             <div class="card-body">
-                <form @submit.prevent="update">
-                    <div class="form-group">
-                        <label for="name">Name</label>
-                        <input type="text" class="form-control" v-model="election.name" placeholder="Enter Name Election">
-                        <div v-if="this.errors.name">
-                            <small class="form-text text-danger">{{ this.errors.name[0] }}</small>
+                <!-- Loader -->
+                <div v-if="stateLoading">
+                    <div class="row col-md-12">
+                        <div class="mx-auto" style="margin:15%;">
+                            <moon-loader :loading="stateLoading" color="blue"></moon-loader>
                         </div>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group col-md-6">
-                            <label for="start_date">Start Date</label>
-                            <input type="date" class="form-control" v-model="election.start_date" placeholder="Enter Start Date" autofocus>
-                            <div v-if="this.errors.start_date">
-                                <small class="form-text text-danger">{{ this.errors.start_date[0] }}</small>
+                </div>
+                <div v-else>   
+                    <form @submit.prevent="update">
+                        <div class="form-group">
+                            <label for="name">Name</label>
+                            <input type="text" class="form-control" v-model="election.name" placeholder="Enter Name Election">
+                            <div v-if="this.errors.name">
+                                <small class="form-text text-danger">{{ this.errors.name[0] }}</small>
                             </div>
                         </div>
-                        <div class="form-group col-md-6">
-                            <label for="end_date">End Date</label>
-                            <input type="date" class="form-control date-picker" v-model="election.end_date" placeholder="Enter End Date">
-                            <div v-if="this.errors.end_date">
-                                <small class="form-text text-danger">{{ this.errors.end_date[0] }}</small>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="start_date">Start Date</label>
+                                <input type="date" class="form-control" v-model="election.start_date" placeholder="Enter Start Date" autofocus>
+                                <div v-if="this.errors.start_date">
+                                    <small class="form-text text-danger">{{ this.errors.start_date[0] }}</small>
+                                </div>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="end_date">End Date</label>
+                                <input type="date" class="form-control date-picker" v-model="election.end_date" placeholder="Enter End Date">
+                                <div v-if="this.errors.end_date">
+                                    <small class="form-text text-danger">{{ this.errors.end_date[0] }}</small>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="email">Select Candidates</label>
-                        <select class="form-control" v-model="candidate_id" @change="test" multiple required>
-                            <option v-for="(candidate, index) in getCandidates" :key="index" :value="candidate.id">
-                                {{ candidate.first_name }} {{ candidate.last_name }}
-                            </option>
-                        </select>
-                        <small class="form-text text-dark">Please select 2 or more candidate from the list above using Ctrl + Left Click.</small>
-                        <div v-if="this.errors.email">
-                            <small class="form-text text-danger">{{ this.errors.email[0] }}</small>
+                        <div class="form-group">
+                            <label for="email">Select Candidates</label>
+                            <select class="form-control" v-model="candidate_id" @change="test" multiple required>
+                                <option v-for="(candidate, index) in getCandidates" :key="index" :value="candidate.id">
+                                    {{ candidate.full_name }}
+                                </option>
+                            </select>
+                            <small class="form-text text-dark">Please select 2 or more candidate from the list above using Ctrl + Left Click.</small>
+                            <div v-if="this.errors.email">
+                                <small class="form-text text-danger">{{ this.errors.email[0] }}</small>
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="phone">Image</label>
-                        <div v-if="imagePreview">
-                            <img :src="imagePreview" width="200" height="150">
+                        <div class="form-group">
+                            <label for="phone">Image</label>
+                            <div v-if="imagePreview">
+                                <img :src="imagePreview" width="200" height="150">
+                            </div>
+                            <input type="file" class="form-control mt-2" @change="onFileSelected">
+                            <div v-if="this.errors.image">
+                                <small class="form-text text-danger">{{ this.errors.image[0] }}</small>
+                            </div>
                         </div>
-                        <input type="file" class="form-control mt-2" @change="onFileSelected">
-                        <div v-if="this.errors.image">
-                            <small class="form-text text-danger">{{ this.errors.image[0] }}</small>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-primary" :disabled="isClick ? true : false">
-                        <span v-if="isClick"><i class="fas fa-spinner fa-spin"></i> Processing...</span>
-                        <span v-else>Update</span>
-                    </button>
-                </form>
+                        <button type="submit" class="btn btn-primary" :disabled="getDataLoading">
+                            <span v-if="getDataLoading"><i class="fas fa-spinner fa-spin"></i> Updating</span>
+                            <span v-else>Update</span>
+                        </button>
+                    </form>
+                </div>
+                <!-- end of Loader -->
             </div>
         </div>
         <!-- end of Table -->

@@ -8,8 +8,8 @@ export default {
     },
     data() {
         return {
-            candidates: [],
-            paginationOptions: [
+            stateLoading: true,
+            perPageOptions: [
                 {
                     text: '10', value: 10
                 },
@@ -23,23 +23,23 @@ export default {
             byOptions: {
                 page: 1,
                 limit: 10,
-                type: 0
+                type: 1
             }
         }
     },
     computed: {
         ...mapGetters({
-            getCandidates: 'candidate/getAllCandidates',
-            getTotalCandidates: 'candidate/getTotalCandidates',
-            dataLoading: 'candidate/getDataLoading'
+            getUsers: 'user/getAllUsers',
+            getTotalUsers: 'user/getTotalUsers',
+            dataLoading: 'user/getDataLoading'
         })
     },
     methods: {
         ...mapActions({
-            getListCandidates: 'candidate/getListCandidatesByPageAndLimit',
-            destroyCandidate: 'candidate/destroy'
+            getAllUsers: 'user/getAll',
+            destroyUser: 'user/destroy'
         }),
-        deleteCandidate(candidate_id) {
+        deleteUser(user_id) {
             this.$swal({
                 title: 'Are you sure?',
                 text: 'This selected data will be permanently deleted!',
@@ -49,30 +49,31 @@ export default {
                 cancelButtonColor: '#d33',
             }).then((res) => {
                 if (res.isConfirmed) {
-                    this.destroyCandidate(candidate_id)
+                    this.destroyUser(user_id).then(() => {
+                        this.getUsersByOptions()
+                    })
 
                     this.$swal({
                         title: 'Deleted!',
-                        text: 'Selected candidate has been deleted',
+                        text: 'Selected election has been deleted',
                         icon: 'success',
                         timer: 1000,
                         timerProgressBar: true
                     })
                 }
-            })
-            
+            })            
         },
-        getCandidatesByOptions() {
-            this.getListCandidates(this.byOptions)
+        getUsersByOptions() {
+            this.getAllUsers(this.byOptions)
         },
-        getCandidatesByRows() {
-            this.byOptions.page = 1
+        getUsersByRows() {
+            this.byOptions.page = 1 // when showing rows selected, back to page 1
 
-            this.getListCandidates(this.byOptions)
+            this.getAllUsers(this.byOptions)
         }
     },
     created() {
-        this.getCandidatesByOptions() // jalanin method
+        this.getUsersByOptions() // jalanin method
     }
 }
 </script>
@@ -82,34 +83,35 @@ export default {
 
         <!-- Page Heading -->
         <div class="d-sm-flex align-items-center justify-content-between mb-4">
-            <h1 class="h3 mb-0 text-gray-800">List Candidates</h1>
+            <h1 class="h3 mb-0 text-gray-800">List Users</h1>
                 
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item">
-                            <router-link :to="{ name: 'dashboard' }">Home</router-link>
-                        </li>
-                        <li class="breadcrumb-item active" aria-current="page">Candidates</li>
-                    </ol>
-                </nav>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <router-link :to="{ name: 'dashboard' }">Home</router-link>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">Users</li>
+                </ol>
+            </nav>
         </div>
 
         <!-- Table -->
         <div class="card shadow">
             <div class="card-header py-3">
         <div class="d-sm-flex align-items-center justify-content-between">
-            <router-link :to="{ name: 'candidates.create' }" class="d-none d-sm-inline-block btn btn-sm btn-outline-primary"><i
-                    class="fas fa-plus fa-sm text-blue-50"></i> Add New Candidate
+            <router-link :to="{ name: 'users.create' }" class="d-none d-sm-inline-block btn btn-sm btn-outline-primary"><i
+                    class="fas fa-plus fa-sm text-blue-50"></i> Add New User
             </router-link>
         </div>
             </div>
-            <div class="card-body">                
+            <div class="card-body">
+                
                 <div class="d-sm-flex align-items-center mb-4">
                     <span>Show </span>
                     &nbsp;
-                    <select @change="getCandidatesByRows" v-model="byOptions.limit" class="input-sm">
-                        <option v-for="paginationOption in paginationOptions" :key="paginationOption.value" :value="paginationOption.value">
-                            {{ paginationOption.text }}
+                    <select @change="getUsersByRows" v-model="byOptions.limit" class="input-sm">
+                        <option v-for="perPageOption in perPageOptions" :key="perPageOption.value" :value="perPageOption.value">
+                            {{ perPageOption.text }}
                         </option>
                     </select>
                     &nbsp;
@@ -120,48 +122,39 @@ export default {
                         <thead>
                             <tr>
                                 <th class="text-center">#</th>
-                                <th>Full Name</th>
-                                <th>Email</th>
+                                <th>Name</th>
                                 <th>Phone</th>
-                                <th>Image</th>
+                                <th>Email</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
                         <tfoot>
                             <tr>
                                 <th class="text-center">#</th>
-                                <th>Full Name</th>
-                                <th>Email</th>
+                                <th>Name</th>
                                 <th>Phone</th>
-                                <th>Image</th>
+                                <th>Email</th>
                                 <th>Action</th>
                             </tr>
                         </tfoot>
                         <tbody>
-                            <tr class="text-center" v-if="dataLoading">
+                            <tr class="td align-middle text-center" v-if="dataLoading">
                                 <td colspan="6" style="padding:10%;"><i class="fas fa-spinner fa-spin"></i> Loading...</td>
                             </tr>
-                            <tr class="td align-middle text-center" v-else-if="getTotalCandidates == 0">
+                            <tr class="td align-middle text-center" v-else-if="getTotalUsers == 0">
                                 <td colspan="6" style="padding:10%;">No Data Available.</td>
                             </tr>
-                            <tr v-else v-for="(candidate, index) in getCandidates" :key="index">
+                            <tr v-else v-for="(user, index) in getUsers" :key="index">
                                 <td class="td align-middle text-center">{{ ((byOptions.page - 1) * byOptions.limit) + index + 1 }}.</td>
-                                <td class="td align-middle">
-                                    <router-link :to="{ name: 'candidates.detail', params: {id: candidate.id} }">
-                                        {{ candidate.full_name }}
-                                    </router-link>
-                                </td>
-                                <td class="td align-middle">{{ candidate.email }}</td>
-                                <td class="td align-middle">{{ candidate.phone }}</td>
-                                <td class="td align-middle text-center">
-                                    <img :src="candidate.thumbnail" :alt="candidate.full_name" width="80" height="60">
-                                </td>
+                                <td class="td align-middle">{{ user.name }}</td>
+                                <td class="td align-middle">{{ user.phone }}</td>
+                                <td class="td align-middle">{{ user.email }}</td>
                                 <td class="td align-middle">
                                     <div class="button-group">
-                                        <router-link :to="{ name: 'candidates.edit', params: {id: candidate.id} }" class="btn btn-sm btn-outline-primary mr-3">
+                                        <router-link :to="{ name: 'users.edit', params: {id: user.id} }" class="btn btn-sm btn-outline-primary mr-3">
                                             Edit
                                         </router-link>
-                                        <button class="btn btn-sm btn-outline-danger" @click.prevent="deleteCandidate(candidate.id)">
+                                        <button class="btn btn-sm btn-outline-danger" @click.prevent="deleteUser(user.id)">
                                             Delete
                                         </button>
                                     </div>
@@ -170,7 +163,7 @@ export default {
                         </tbody>
                     </table>
                 </div>
-                <pagination v-if="!dataLoading" v-model="byOptions.page" :records="getTotalCandidates" :per-page="byOptions.limit" @paginate="getCandidatesByOptions"/>
+                <pagination v-if="!dataLoading" v-model="byOptions.page" :records="getTotalUsers" :per-page="byOptions.limit" @paginate="getUsersByOptions"/>
             </div>
         </div>
         <!-- end of Table -->

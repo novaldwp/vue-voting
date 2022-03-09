@@ -15,6 +15,19 @@ import ElectionCreate from '../views/election/ElectionCreate.vue'
 import ElectionEdit from '../views/election/ElectionEdit.vue'
 import ElectionDetail from '../views/election/ElectionDetail.vue'
 
+import RecapitulationIndex from '../views/recapitulation/RecapitulationIndex.vue'
+import RecapitulationDetail from '../views/recapitulation/RecapitulationDetail.vue'
+
+import VotingIndex from '../views/voting/VotingIndex.vue'
+
+import ParticipantIndex from '../views/participant/ParticipantIndex.vue'
+import ParticipantCreate from '../views/participant/ParticipantCreate.vue'
+import ParticipantEdit from '../views/participant/ParticipantEdit.vue'
+
+import UserIndex from '../views/user/UserIndex.vue'
+import UserCreate from '../views/user/UserCreate.vue'
+import UserEdit from '../views/user/UserEdit.vue'
+
 const routes = [
     {
         path: '/login',
@@ -78,6 +91,60 @@ const routes = [
                 path: '/elections/detail/:id',
                 name: 'elections.detail',
                 component: ElectionDetail,
+                meta: { requiresAuth: true },
+            },
+            {
+                path: '/recapitulations',
+                name: 'recapitulations.index',
+                component: RecapitulationIndex,
+                meta: { requiresAuth: true },
+            },
+            {
+                path: '/recapitulations/elections/:id',
+                name: 'recapitulations.detail',
+                component: RecapitulationDetail,
+                meta: { requiresAuth: true },
+            },
+            {
+                path: '/votings',
+                name: 'votings.index',
+                component: VotingIndex,
+                meta: { requiresAuth: true },
+            },
+            {
+                path: '/participants',
+                name: 'participants.index',
+                component: ParticipantIndex,
+                meta: { requiresAuth: true },
+            },
+            {
+                path: '/participants/create',
+                name: 'participants.create',
+                component: ParticipantCreate,
+                meta: { requiresAuth: true },
+            },
+            {
+                path: '/participants/edit/:id',
+                name: 'participants.edit',
+                component: ParticipantEdit,
+                meta: { requiresAuth: true },
+            },
+            {
+                path: '/users',
+                name: 'users.index',
+                component: UserIndex,
+                meta: { requiresAuth: true },
+            },
+            {
+                path: '/users/create',
+                name: 'users.create',
+                component: UserCreate,
+                meta: { requiresAuth: true },
+            },
+            {
+                path: '/users/edit/:id',
+                name: 'users.edit',
+                component: UserEdit,
                 meta: { requiresAuth: true },
             },
         ]

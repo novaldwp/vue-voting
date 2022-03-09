@@ -11,6 +11,8 @@ export default {
             prevRoute: '',
             candidates: [],
             election: {},
+            errors: [],
+            isClick: false,
             image: '',
             imagePreview: '',
             isRecapitulate: false
@@ -26,45 +28,8 @@ export default {
     },
     methods: {
         ...mapActions({
-            getElectionById: 'election/getById',
-            storeVoting: 'voting/store'
+            getElectionById: 'election/getById'
         }),
-        vote(candidate_id) {
-            const data = {
-                election_id: this.$route.params.id,
-                candidate_id: candidate_id
-            }
-
-            this.$swal({
-                title: 'Are you sure?',
-                text: 'You will not able to vote again after this',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-            }).then((res) => {
-                if (res.isConfirmed) {
-                    this.storeVoting(data).then((res) => {
-                        this.$swal({
-                            title: 'Success!',
-                            text: 'Successfully vote candidate',
-                            icon: 'success',
-                            timer: 1000,
-                            timerProgressBar: true
-                        })
-                    })    
-                    .catch((err) => {
-                        const message = err.response.data.message
-                        
-                        this.$swal({
-                            title: 'Error',
-                            text: message,
-                            icon: 'error',
-                        })
-                    })   
-                }
-            })
-        }
     },
     created() {
         const election_id = this.$route.params.id
@@ -115,7 +80,7 @@ export default {
 
         <!-- Page Heading -->
         <div class="d-sm-flex align-items-center justify-content-between mb-4">
-            <h1 class="h3 mb-0 text-gray-800">Detail Election</h1>
+            <h1 class="h3 mb-0 text-gray-800">Voting Election</h1>
                 
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
@@ -123,9 +88,9 @@ export default {
                         <router-link :to="{ name: 'dashboard' }">Home</router-link>
                     </li>
                     <li class="breadcrumb-item">
-                        <router-link :to="{ name: 'elections.index' }">Elections</router-link>
+                        <router-link :to="{ name: 'votings.index' }">Votings</router-link>
                     </li>
-                    <li class="breadcrumb-item active" aria-current="page">Detail Election</li>
+                    <li class="breadcrumb-item active" aria-current="page">Voting Election</li>
                 </ol>
             </nav>
         </div>
@@ -148,16 +113,22 @@ export default {
                     </div>
                 </div>
                 <div v-else>
-                    <div class="row col-md-12 mb-5">
+                    <div class="row col-md-12">
+                        <div class="mx-auto">
+                            <img :src="this.imagePreview" :alt="this.election.name" width="250" height="150">
+                        </div>
+                    </div>
+                    <div class="row col-md-12">
                         <div class="mx-auto mt-3">
                             <h3>{{ this.election.name }}</h3>
                         </div>
                     </div>
+                    <hr>
                     <div class="col-md-12">
                         <div class="d-sm-flex align-items-center justify-content-between mb-4">
                             <h1 class="h3 mb-0 text-gray-800" style="margin-left:-1%;">List Candidates</h1>
                             <template v-if="isRecapitulate">
-                                <router-link :to="{ name: 'recapitulations.detail', params: { id: election.id } }" class="d-none d-sm-inline-block text-right" style="margin-right:-1%;">
+                                <router-link :to="{ name: 'recapitulations.detail', params: { id: election.id } }" class="d-none d-sm-inline-block text-right btn btn-sm btn-primary shadow-sm" style="margin-right:-1%;">
                                     Data Recapitulation
                                 </router-link>    
                             </template>
@@ -168,19 +139,17 @@ export default {
                                     <thead>
                                         <tr>
                                             <th>Full Name</th>
-                                            <th>Vision</th>
-                                            <th>Mission</th>
+                                            <th>Email</th>
+                                            <th>Phone</th>
                                             <th class="text-center">Image</th>
-                                            <th>Action</th>
                                         </tr>
                                     </thead>
                                     <tfoot>
                                         <tr>
                                             <th>Full Name</th>
-                                            <th>Vision</th>
-                                            <th>Mission</th>
+                                            <th>Email</th>
+                                            <th>Phone</th>
                                             <th class="text-center">Image</th>
-                                            <th>Action</th>
                                         </tr>
                                     </tfoot>
                                     <tbody>
@@ -189,21 +158,12 @@ export default {
                                                 <router-link :to="{ name: 'candidates.detail', params:{ id: candidate.id } }">
                                                     {{ candidate.full_name }} 
                                                 </router-link>
+                                                &nbsp;
                                             </td>
-                                            <td>{{ candidate.vision }}</td>
-                                            <td>{{ candidate.mission }}</td>
+                                            <td>{{ candidate.email }}</td>
+                                            <td>{{ candidate.phone }}</td>
                                             <td class="text-center">
                                                 <img :src="candidate.thumbnail" :alt="candidate.first_name" width="80" height="60">
-                                            </td>
-                                            <td class="td align-middle" v-if='this.$store.state.auth.credential.role == "voter"'>
-                                                <div class="button-group text-center" v-if="election.votings && Object.keys(election.votings).length > 0">
-                                                    <span v-show="candidate.id == election.votings.candidate_id" class="btn btn-sm btn-outline-primary" style="cursor:default;" data-toggle="tooltip" title="You Vote this Candidate">
-                                                        <i class="fa fa-check-circle" aria-hidden="true"></i>
-                                                    </span>
-                                                </div>
-                                                <div class="button-group" v-else>
-                                                    <button class="btn btn-sm btn-primary" @click.prevent="vote(candidate.id)">Voting</button>
-                                                </div>
                                             </td>
                                         </tr>
                                     </tbody>

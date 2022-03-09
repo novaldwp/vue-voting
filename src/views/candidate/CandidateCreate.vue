@@ -1,13 +1,18 @@
 <script>
+import MoonLoader from 'vue-spinner/src/MoonLoader.vue'
 import { mapActions } from 'vuex'
 export default {
+    components: {
+        MoonLoader
+    },
     data() {
         return {
             candidate: {},
             errors: [],
             isClick: false,
             image: '',
-            imagePreview: ''
+            imagePreview: '',
+            stateLoading: true
         }
     },
     methods: {
@@ -53,8 +58,9 @@ export default {
 
                 this.errors = err.response.data.errors
             })
-
-            this.isClick = false
+            .finally(() => {
+                this.isClick = false
+            })
         },
         onFileSelected(e) {
             let files = e.target.files
@@ -72,104 +78,130 @@ export default {
                 this.imagePreview = URL.createObjectURL(files[0]) // create preview using objectURL
             }
         }
+    },
+    created() {
+        setTimeout(() => this.stateLoading = false, 500)
     }
 }
 </script>
 <template>
-    <!-- Begin Page Content -->
-    <div class="container-fluid">
+        <!-- Begin Page Content -->
+        <div class="container-fluid">
 
-        <!-- Page Heading -->
-        <div class="d-sm-flex align-items-center justify-content-between mb-4">
-            <h1 class="h3 mb-0 text-gray-800">Add New Candidate</h1>
-        </div>
-
-        <!-- Table -->
-        <div class="card shadow">
-            <div class="card-header py-3">
-        <div class="d-sm-flex align-items-center justify-content-between">
-            <router-link :to="{ name: 'candidates.index' }" class="d-none d-sm-inline-block btn btn-sm btn-outline-primary"><i
-                    class="fas fa-chevron-left fa-sm text-blue-50"></i> Back
-            </router-link>
-        </div>
+            <!-- Page Heading -->
+            <div class="d-sm-flex align-items-center justify-content-between mb-4">
+                <h1 class="h3 mb-0 text-gray-800">Add New Candidate</h1>
+                
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <router-link :to="{ name: 'dashboard' }">Home</router-link>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <router-link :to="{ name: 'candidates.index' }">Candidates</router-link>
+                        </li>
+                        <li class="breadcrumb-item active" aria-current="page">Add Candidate</li>
+                    </ol>
+                </nav>
             </div>
-            <div class="card-body">
-                <form @submit.prevent="storeCandidate">
-                    <div class="form-row">
-                        <div class="form-group col-md-6">
-                            <label for="first_name">First Name</label>
-                            <input type="text" class="form-control" v-model="candidate.first_name" placeholder="Enter First Name" autofocus>
-                            <div v-if="this.errors.first_name">
-                                <small class="form-text text-danger">{{ this.errors.first_name[0] }}</small>
+
+            <!-- Table -->
+            <div class="card shadow">
+                <div class="card-header py-3">
+            <div class="d-sm-flex align-items-center justify-content-between">
+                <router-link :to="{ name: 'candidates.index' }" class="d-none d-sm-inline-block btn btn-sm btn-outline-primary"><i
+                        class="fas fa-chevron-left fa-sm text-blue-50"></i> Back
+                </router-link>
+            </div>
+                </div>
+                <div class="card-body">
+                    <!-- Loader -->
+                    <div v-if="stateLoading">
+                        <div class="row col-md-12">
+                            <div class="mx-auto" style="margin:15%;">
+                                <moon-loader :loading="stateLoading" color="blue"></moon-loader>
                             </div>
                         </div>
-                        <div class="form-group col-md-6">
-                            <label for="last_name">Last Name</label>
-                            <input type="text" class="form-control" v-model="candidate.last_name" placeholder="Enter Last Name">
-                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="email">Email</label>
-                        <input type="email" class="form-control" v-model="candidate.email" placeholder="Enter Email Address (ex. test@test.com)">
-                        <div v-if="this.errors.email">
-                            <small class="form-text text-danger">{{ this.errors.email[0] }}</small>
-                        </div>
+                    <div v-else>
+                        <form @submit.prevent="storeCandidate">
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label for="first_name">First Name</label>
+                                    <input type="text" class="form-control" v-model="candidate.first_name" placeholder="Enter First Name" autofocus>
+                                    <div v-if="this.errors.first_name">
+                                        <small class="form-text text-danger">{{ this.errors.first_name[0] }}</small>
+                                    </div>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label for="last_name">Last Name</label>
+                                    <input type="text" class="form-control" v-model="candidate.last_name" placeholder="Enter Last Name">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="email">Email</label>
+                                <input type="email" class="form-control" v-model="candidate.email" placeholder="Enter Email Address (ex. test@test.com)">
+                                <div v-if="this.errors.email">
+                                    <small class="form-text text-danger">{{ this.errors.email[0] }}</small>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="phone">Phone Number</label>
+                                <input type="text" class="form-control" v-model="candidate.phone" placeholder="Enter Phone Number (ex. 08819xxxxx)" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1');">
+                                <div v-if="this.errors.phone">
+                                    <small class="form-text text-danger">{{ this.errors.phone[0] }}</small>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="dob">Date of Birth</label>
+                                <input type="date" class="form-control" v-model="candidate.dob">
+                                <div v-if="this.errors.dob">
+                                    <small class="form-text text-danger">{{ this.errors.dob[0] }}</small>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="address">Address</label>
+                                <textarea class="form-control" v-model="candidate.address" cols="30" rows="5" placeholder="Enter Address"></textarea>
+                                <div v-if="this.errors.address">
+                                    <small class="form-text text-danger">{{ this.errors.address[0] }}</small>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="vision">Vision</label>
+                                <textarea class="form-control" v-model="candidate.vision" cols="30" rows="5" placeholder="Enter Vision"></textarea>
+                                <div v-if="this.errors.vision">
+                                    <small class="form-text text-danger">{{ this.errors.vision[0] }}</small>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="mission">Mission</label>
+                                <textarea class="form-control" v-model="candidate.mission" cols="30" rows="5" placeholder="Enter Mission"></textarea>
+                                <div v-if="this.errors.mission">
+                                    <small class="form-text text-danger">{{ this.errors.mission[0] }}</small>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="phone">Image</label>
+                                <div v-if="imagePreview">
+                                    <img :src="imagePreview" width="200" height="150">
+                                </div>
+                                <input type="file" class="form-control mt-2" @change="onFileSelected">
+                                <div v-if="this.errors.image">
+                                    <small class="form-text text-danger">{{ this.errors.image[0] }}</small>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary" :disabled="isClick">
+                                <span v-if="isClick"><i class="fas fa-spinner fa-spin"></i> Saving</span>
+                                <span v-else>Save</span>
+                            </button>
+                        </form>
                     </div>
-                    <div class="form-group">
-                        <label for="phone">Phone Number</label>
-                        <input type="text" class="form-control" v-model="candidate.phone" placeholder="Enter Phone Number (ex. 08819xxxxx)" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1');">
-                        <div v-if="this.errors.phone">
-                            <small class="form-text text-danger">{{ this.errors.phone[0] }}</small>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="dob">Date of Birth</label>
-                        <input type="date" class="form-control" v-model="candidate.dob">
-                        <div v-if="this.errors.dob">
-                            <small class="form-text text-danger">{{ this.errors.dob[0] }}</small>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="address">Address</label>
-                        <textarea class="form-control" v-model="candidate.address" cols="30" rows="5" placeholder="Enter Address"></textarea>
-                        <div v-if="this.errors.address">
-                            <small class="form-text text-danger">{{ this.errors.address[0] }}</small>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="vision">Vision</label>
-                        <textarea class="form-control" v-model="candidate.vision" cols="30" rows="5" placeholder="Enter Vision"></textarea>
-                        <div v-if="this.errors.vision">
-                            <small class="form-text text-danger">{{ this.errors.vision[0] }}</small>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="mission">Mission</label>
-                        <textarea class="form-control" v-model="candidate.mission" cols="30" rows="5" placeholder="Enter Mission"></textarea>
-                        <div v-if="this.errors.mission">
-                            <small class="form-text text-danger">{{ this.errors.mission[0] }}</small>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="phone">Image</label>
-                        <div v-if="imagePreview">
-                            <img :src="imagePreview" width="200" height="150">
-                        </div>
-                        <input type="file" class="form-control mt-2" @change="onFileSelected">
-                        <div v-if="this.errors.image">
-                            <small class="form-text text-danger">{{ this.errors.image[0] }}</small>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-primary" :disabled="isClick ? true : false">
-                        <span v-if="isClick"><i class="fas fa-spinner fa-spin"></i> Processing...</span>
-                        <span v-else>Save</span>
-                    </button>
-                </form>
+                    <!-- end of Loader -->
+                </div>
             </div>
-        </div>
-        <!-- end of Table -->
+            <!-- end of Table -->
 
-    </div>
-    <!-- /.container-fluid -->
+        </div>
+        <!-- /.container-fluid -->
 
 </template>

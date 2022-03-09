@@ -3,6 +3,7 @@ import axios from "axios"
 export default {
     namespaced: true,
     state: {
+        election: {},
         elections: [],
         totalElections: 0,
         dataLoading: false
@@ -11,7 +12,10 @@ export default {
         getAllElections(state) {
             return state.elections
         },
-        getTotalElection(state) {
+        getElection(state) {
+            return state.election
+        },
+        getTotalElections(state) {
             return state.totalElections
         },
         getDataLoading(state) {
@@ -21,6 +25,9 @@ export default {
     mutations: {
         setElections(state, payload) {
             state.elections = payload
+        },
+        setElection(state, payload) {
+            state.election = payload
         },
         setTotalElections(state, payload) {
             state.totalElections = payload
@@ -34,8 +41,8 @@ export default {
             commit('setDataLoading', true)
             
             return new Promise((resolve, reject) => {
-                const page = payload.page
-                const limit = payload.limit
+                const page   = payload.page
+                const limit  = payload.limit
 
                 axios.get(
                     `http://api-voting.test/api/v1/elections/paginate?page=${page}&limit=${limit}`
@@ -46,12 +53,37 @@ export default {
 
                     commit('setElections', elections)
                     commit('setTotalElections', totalElections)
-                    commit('setDataLoading', false)
 
                     resolve(res)
                 })
                 .catch((err) => {
                     reject(err)
+                })
+                .finally(() => {
+                    commit('setDataLoading', false)
+                })
+            })
+        },
+        getVotingRecapitulation({ commit }, payload) {
+            commit('setDataLoading', true)
+
+            return new Promise((resolve, reject) => {
+                const election_id = payload
+
+                axios.get(
+                    `http://api-voting.test/api/v1/elections/getVotingRecapitulation/${election_id}`
+                )
+                .then((res) => {
+                    const data = res.data.data
+                    commit('setElection', data)
+                    
+                    resolve(res)
+                })
+                .catch((err) => {
+                    reject(err)
+                })
+                .finally(() => {
+                    commit('setDataLoading', false)
                 })
             })
         },
@@ -81,6 +113,8 @@ export default {
             })
         },
         getById({ commit }, payload) {
+            commit('setDataLoading', true)
+
             return new Promise((resolve, reject) => {
                 const election_id = payload
 
@@ -91,9 +125,13 @@ export default {
                 .catch((err) => {
                     reject(err)
                 })
+                .finally(() => {
+                    commit('setDataLoading', false)
+                })
             })
         },
         update({ commit }, payload) {
+            commit('setDataLoading', true)
             return new Promise((resolve, reject) => {
                 const data        = new FormData()
                 const election_id = payload.election_id
@@ -103,7 +141,7 @@ export default {
                 data.append('image', payload.image)
                 data.append('candidate_id', payload.candidate_id)
                 data.append('_method', 'PUT')
-                console.log(payload)
+                
                 axios.post(
                     `http://api-voting.test/api/v1/elections/${election_id}`,
                     data, 
@@ -113,9 +151,13 @@ export default {
                         }
                     }
                 ).then((res) => {
+                    commit('setDataLoading', false)
+
                     resolve(res)
                 })
                 .catch((err) => {
+                    commit('setDataLoading', false)
+                    
                     reject(err)
                 })   
             })

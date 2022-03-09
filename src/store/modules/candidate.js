@@ -11,6 +11,9 @@ export default {
         getAllCandidates(state) {
             return state.candidates
         },
+        getTotalCandidates(state) {
+            return state.totalCandidates
+        },
         getDataLoading(state) {
             return state.dataLoading
         }
@@ -66,10 +69,10 @@ export default {
                     commit('setCandidates', candidates)
                     commit('setTotalCandidates', totalCandidates)
                     commit('setDataLoading', false)
+                    
                     resolve(res)
                 })
                 .catch((err) => {
-                    console.log(err)
                     reject(err)
                 })
             })

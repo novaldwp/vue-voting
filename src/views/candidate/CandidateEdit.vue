@@ -1,13 +1,18 @@
 <script>
+import MoonLoader from 'vue-spinner/src/MoonLoader.vue'
 import { mapActions } from 'vuex'
 export default {
+    components: {
+        MoonLoader
+    },
     data() {
         return {
             candidate: [],
             errors: [],
             isClick: false,
             image: '',
-            imagePreview: ''
+            imagePreview: '',
+            stateLoading: true
         }
     },
     methods: {
@@ -56,8 +61,9 @@ export default {
 
                 this.errors = err.response.data.errors
             })
-
-            this.isClick = false
+            .finally(() => {
+                this.isClick = false
+            })
         },
         onFileSelected(e) {
             let files = e.target.files
@@ -79,9 +85,10 @@ export default {
         const candidate_id = this.$route.params.id
 
         this.getCandidateById(candidate_id).then((res) => {
-            this.candidate = res.data.data
-            this.image = res.data.data.image
+            this.candidate    = res.data.data
+            this.image        = res.data.data.image
             this.imagePreview = res.data.data.thumbnail
+            this.stateLoading = false
         })
         .catch((err) => {
             const title   = err.response.status
@@ -112,6 +119,18 @@ export default {
         <!-- Page Heading -->
         <div class="d-sm-flex align-items-center justify-content-between mb-4">
             <h1 class="h3 mb-0 text-gray-800">Edit Data Candidate</h1>
+            
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <router-link :to="{ name: 'dashboard' }">Home</router-link>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <router-link :to="{ name: 'candidates.index' }">Candidates</router-link>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">Edit Candidate</li>
+                </ol>
+            </nav>
         </div>
 
         <!-- Table -->
@@ -124,77 +143,88 @@ export default {
         </div>
             </div>
             <div class="card-body">
-                <form @submit.prevent="updateCandidate">
-                    <div class="form-row">
-                        <div class="form-group col-md-6">
-                            <label for="first_name">First Name</label>
-                            <input type="text" class="form-control" v-model="candidate.first_name" placeholder="Enter First Name" autofocus>
-                            <div v-if="this.errors.first_name">
-                                <small class="form-text text-danger">{{ this.errors.first_name[0] }}</small>
+                <!-- Loader -->
+                <div v-if="stateLoading">
+                    <div class="row col-md-12">
+                        <div class="mx-auto" style="margin:15%;">
+                            <moon-loader :loading="stateLoading" color="blue"></moon-loader>
+                        </div>
+                    </div>
+                </div>
+                <div v-else>
+                    <form @submit.prevent="updateCandidate">
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="first_name">First Name</label>
+                                <input type="text" class="form-control" v-model="candidate.first_name" placeholder="Enter First Name" autofocus>
+                                <div v-if="this.errors.first_name">
+                                    <small class="form-text text-danger">{{ this.errors.first_name[0] }}</small>
+                                </div>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="last_name">Last Name</label>
+                                <input type="text" class="form-control" v-model="candidate.last_name" placeholder="Enter Last Name">
                             </div>
                         </div>
-                        <div class="form-group col-md-6">
-                            <label for="last_name">Last Name</label>
-                            <input type="text" class="form-control" v-model="candidate.last_name" placeholder="Enter Last Name">
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" class="form-control" v-model="candidate.email" placeholder="Enter Email Address (ex. test@test.com)">
+                            <div v-if="this.errors.email">
+                                <small class="form-text text-danger">{{ this.errors.email[0] }}</small>
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="email">Email</label>
-                        <input type="email" class="form-control" v-model="candidate.email" placeholder="Enter Email Address (ex. test@test.com)">
-                        <div v-if="this.errors.email">
-                            <small class="form-text text-danger">{{ this.errors.email[0] }}</small>
+                        <div class="form-group">
+                            <label for="phone">Phone Number</label>
+                            <input type="text" class="form-control" v-model="candidate.phone" placeholder="Enter Phone Number (ex. 08819xxxxx)" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1');">
+                            <div v-if="this.errors.phone">
+                                <small class="form-text text-danger">{{ this.errors.phone[0] }}</small>
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="phone">Phone Number</label>
-                        <input type="text" class="form-control" v-model="candidate.phone" placeholder="Enter Phone Number (ex. 08819xxxxx)" oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*?)\..*/g, '$1');">
-                        <div v-if="this.errors.phone">
-                            <small class="form-text text-danger">{{ this.errors.phone[0] }}</small>
+                        <div class="form-group">
+                            <label for="dob">Date of Birth</label>
+                            <input type="date" class="form-control" v-model="candidate.dob">
+                            <div v-if="this.errors.dob">
+                                <small class="form-text text-danger">{{ this.errors.dob[0] }}</small>
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="dob">Date of Birth</label>
-                        <input type="date" class="form-control" v-model="candidate.dob">
-                        <div v-if="this.errors.dob">
-                            <small class="form-text text-danger">{{ this.errors.dob[0] }}</small>
+                        <div class="form-group">
+                            <label for="address">Address</label>
+                            <textarea class="form-control" v-model="candidate.address" cols="30" rows="5" placeholder="Enter Address"></textarea>
+                            <div v-if="this.errors.address">
+                                <small class="form-text text-danger">{{ this.errors.address[0] }}</small>
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="address">Address</label>
-                        <textarea class="form-control" v-model="candidate.address" cols="30" rows="5" placeholder="Enter Address"></textarea>
-                        <div v-if="this.errors.address">
-                            <small class="form-text text-danger">{{ this.errors.address[0] }}</small>
+                        <div class="form-group">
+                            <label for="vision">Vision</label>
+                            <textarea class="form-control" v-model="candidate.vision" cols="30" rows="5" placeholder="Enter Vision"></textarea>
+                            <div v-if="this.errors.vision">
+                                <small class="form-text text-danger">{{ this.errors.vision[0] }}</small>
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="vision">Vision</label>
-                        <textarea class="form-control" v-model="candidate.vision" cols="30" rows="5" placeholder="Enter Vision"></textarea>
-                        <div v-if="this.errors.vision">
-                            <small class="form-text text-danger">{{ this.errors.vision[0] }}</small>
+                        <div class="form-group">
+                            <label for="mission">Mission</label>
+                            <textarea class="form-control" v-model="candidate.mission" cols="30" rows="5" placeholder="Enter Mission"></textarea>
+                            <div v-if="this.errors.mission">
+                                <small class="form-text text-danger">{{ this.errors.mission[0] }}</small>
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="mission">Mission</label>
-                        <textarea class="form-control" v-model="candidate.mission" cols="30" rows="5" placeholder="Enter Mission"></textarea>
-                        <div v-if="this.errors.mission">
-                            <small class="form-text text-danger">{{ this.errors.mission[0] }}</small>
+                        <div class="form-group">
+                            <label for="phone">Image</label>
+                            <div v-if="imagePreview">
+                                <img :src="imagePreview" width="200" height="150">
+                            </div>
+                            <input type="file" class="form-control mt-2" @change="onFileSelected">
+                            <div v-if="this.errors.image">
+                                <small class="form-text text-danger">{{ this.errors.image[0] }}</small>
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="phone">Image</label>
-                        <div v-if="imagePreview">
-                            <img :src="imagePreview" width="200" height="150">
-                        </div>
-                        <input type="file" class="form-control mt-2" @change="onFileSelected">
-                        <div v-if="this.errors.image">
-                            <small class="form-text text-danger">{{ this.errors.image[0] }}</small>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-primary" :disabled="isClick ? true : false">
-                        <span v-if="isClick"><i class="fas fa-spinner fa-spin"></i> Processing...</span>
-                        <span v-else>Update</span>
-                    </button>
-                </form>
+                        <button type="submit" class="btn btn-primary" :disabled="isClick">
+                            <span v-if="isClick"><i class="fas fa-spinner fa-spin"></i> Updating</span>
+                            <span v-else>Update</span>
+                        </button>
+                    </form>
+                </div>
+                <!-- end of Loader -->
             </div>
         </div>
         <!-- end of Table -->
